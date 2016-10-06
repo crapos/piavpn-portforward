@@ -166,7 +166,6 @@ print_vpn_information()
   fi
 }
 
-
 while [ "`echo $1 | cut -c1`" = "-" ]; do
   case "$1" in
     "--usage"|"--help"|"-h" ) usage_and_exit 0;;
@@ -181,6 +180,7 @@ while [ "`echo $1 | cut -c1`" = "-" ]; do
     "--testport"|"--t"      ) TESTPORT=0; shift;;
     "--silent"|"-s"         ) SILENT=0; shift;;
     "--interface"|"-i"      ) echo "Interface: $2 "; INTERFACE="$2"; shift 2;;
+    *                       ) echo "ERROR: Invalid option: \""$1"\""; exit 1;;
   esac
 done
 if [ "$1" != "" ] ; then

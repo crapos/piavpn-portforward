@@ -13,7 +13,7 @@
 #PORTCHECKURI="http://example.xyz/pc.php?p="
 
 PROGRAM=`basename $0`
-VERSION=1.0
+VERSION=1.1
 CURL_TIMEOUT=4
 USE_IP=0
 USE_SUM=0
@@ -66,16 +66,17 @@ error_and_usage( )
 
 usage( )
 {
-  echo "Usage: `dirname $0`/$PROGRAM <user> <password> (optional parameters)"
-  echo "       `dirname $0`/$PROGRAM --file <credentials filename>  (optional parameters)"
+  echo "Usage: `dirname $0`/$PROGRAM (optional parameters) <user> <password>"
   echo ""
   echo "  <credentials filename> - path to plane text file containing PIA credentials"
   echo "                           1st line of file is username, 2nd line is passwd"
   echo "                           can use same file you use for openvpn credentials"
   echo "  optional parameter(s)"
+  echo "     -v | --version sho version"
+  echo "     -f | --file <credentials filename>"
   echo "     -t | --testport <run an external test on port>"
   echo "     -s | --silent <silent, print port and nothing else>"
-  echo "     -i | --interface <VPN Interface>"
+  echo "     -i | --interface tun0"
   echo ""
 }
 
@@ -190,7 +191,6 @@ if [ "$2" != "" ] ; then
 fi
 
 if [ -z "${USER}" ] || [ -z "${PASSWORD}" ]; then
-  echo "USER/Pass not found"
   usage_and_exit 0
 fi
 

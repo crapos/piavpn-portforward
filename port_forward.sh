@@ -179,7 +179,7 @@ while [ "`echo $1 | cut -c1`" = "-" ]; do
                               fi; shift 2;;
     "--testport"|"--t"      ) TESTPORT=0; shift;;
     "--silent"|"-s"         ) SILENT=0; shift;;
-    "--interface"|"-i"      ) echo "Interface: $2 "; INTERFACE="$2"; shift 2;;
+    "--interface"|"-i"      ) INTERFACE="$2"; shift 2;;
     *                       ) echo "ERROR: Invalid option: \""$1"\""; exit 1;;
   esac
 done

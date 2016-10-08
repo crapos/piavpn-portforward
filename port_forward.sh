@@ -7,13 +7,13 @@
 #CLIENT_ID="replace with anything you like"
 #
 # Uncomment below and change to your interface if you don't want the script to try to work it out
-#INTERFACE="tun0"
+#INTERFACE="tab0"
 #
 # if you have a different url to check port status then place it here, the port will be appended to the end of the URI
 #PORTCHECKURI="http://example.xyz/pc.php?p="
 
 PROGRAM=`basename $0`
-VERSION=1.0
+VERSION=1.1
 CURL_TIMEOUT=4
 USE_IP=0
 USE_SUM=0
@@ -66,16 +66,18 @@ error_and_usage( )
 
 usage( )
 {
-  echo "Usage: `dirname $0`/$PROGRAM <user> <password> (optional parameters)"
-  echo "       `dirname $0`/$PROGRAM --file <credentials filename>  (optional parameters)"
+  echo "Usage: `dirname $0`/$PROGRAM (optional parameters) <user> <password>"
   echo ""
   echo "  <credentials filename> - path to plane text file containing PIA credentials"
   echo "                           1st line of file is username, 2nd line is passwd"
   echo "                           can use same file you use for openvpn credentials"
   echo "  optional parameter(s)"
+  echo "     -v | --version sho version"
+  echo "     -f | --file <credentials filename>"
   echo "     -t | --testport <run an external test on port>"
   echo "     -s | --silent <silent, print port and nothing else>"
-  echo ""  
+  echo "     -i | --interface tun0"
+  echo ""
 }
 
 usage_and_exit( )
@@ -114,7 +116,7 @@ port_forward_assignment( )
   if [ -z "${CLIENT_ID}" ];then
     CLIENT_ID="$USER `uname -v`"
   fi
-  
+
   # Encode the string with md5 or sha, then delete every 'f' in the string, this will make a UUID that's constantly
   # generated, doesn't have to be stored anywhere, and can't be decrypted.
 
@@ -127,7 +129,7 @@ port_forward_assignment( )
       CLIENT_ID=`echo $CLIENT_ID | md5 | awk '{gsub("f","",$1); print $1}'`
     fi
   fi
- 
+
   json=`curl -m $CURL_TIMEOUT --silent --interface $INTERFACE -d "user=$USER&pass=$PASSWORD&client_id=$CLIENT_ID&local_ip=$IPADDRESS" 'https://www.privateinternetaccess.com/vpninfo/port_forward_assignment' | head -1`
 }
 
@@ -138,7 +140,7 @@ print_vpn_information()
 
   externalIP=`curl -m $CURL_TIMEOUT --interface $INTERFACE "http://ipinfo.io/ip" --silent --stderr -`
   if [ $SILENT -ne 0 ];then echo "VPN Internal IP = $IPADDRESS";fi
-  
+
   if port=`echo $json | awk 'BEGIN{r=1;FS="{|:|}"} /port/{r=0; print $3} END{exit r}'`; then
     if [ ! -z "${port##*[!0-9]*}" ]; then
       if [ $SILENT -ne 0 ];then echo "VPN External IP:Port = $externalIP:$port";else echo $port;fi
@@ -164,36 +166,29 @@ print_vpn_information()
   fi
 }
 
-
-# By default assume first two parameters are user and passwd.
-USER=$1
-PASSWORD=$2
-
-for prm in "$@"; do
- case $prm in
-  --usage | --help | -h )
-    usage_and_exit 0
-    ;;
-  --version | -v )
-    version
-    exit 0
-    ;;
-  --file | -f )
-    if [ -z "${2}" ]; then
-      usage_and_exit 0
-    fi
-    USER=`sed '1q;d' $2`
-    PASSWORD=`sed '2q;d' $2`
-    ;;
-  --testport | -t )
-    TESTPORT=0
-    ;;
-  --silent | -s )
-    SILENT=0
-    TESTPORT=1
-    ;;
- esac
+while [ "`echo $1 | cut -c1`" = "-" ]; do
+  case "$1" in
+    "--usage"|"--help"|"-h" ) usage_and_exit 0;;
+    "--version"|"-v"        ) version; exit 0;;
+    "--file"|"-f"           ) if [ ! -f $2 ] ; then
+                                echo "File dosent exist"
+                                usage_and_exit 0
+                              else
+                                USER=$(head -n 1 $2)
+                                PASSWORD=$(tail -n 1 $2)
+                              fi; shift 2;;
+    "--testport"|"--t"      ) TESTPORT=0; shift;;
+    "--silent"|"-s"         ) SILENT=0; shift;;
+    "--interface"|"-i"      ) INTERFACE="$2"; shift 2;;
+    *                       ) echo "ERROR: Invalid option: \""$1"\""; exit 1;;
+  esac
 done
+if [ "$1" != "" ] ; then
+  USER=$1
+fi
+if [ "$2" != "" ] ; then
+  PASSWORD=$2
+fi
 
 if [ -z "${USER}" ] || [ -z "${PASSWORD}" ]; then
   usage_and_exit 0
